@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  coins     Int      @default(20)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  publishedTasks Task[]       @relation("Publisher")
+  claimedTasks   Task[]       @relation("Claimer")
+  completions    Completion[]
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  type        String
+  title       String
+  contentUrl  String?
+  rewardCoins Int
+  status      String   @default("pending")
+  rejected    Boolean  @default(false)
+
+  publisherId String
+  publisher   User     @relation("Publisher", fields: [publisherId], references: [id])
+
+  claimerId   String?
+  claimer     User?    @relation("Claimer", fields: [claimerId], references: [id])
+
+  deadline    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  completions Completion[]
+}
+
+model Completion {
+  id          String   @id @default(uuid())
+  contentUrl  String
+  submittedAt DateTime
+  isValid     Boolean
+
+  taskId String
+  task   Task @relation(fields: [taskId], references: [id])
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model VerificationCode {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
