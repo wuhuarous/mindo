@@ -95,5 +95,5 @@ class AppTokens {
 }
 
 class AppConstants {
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = 'http://119.91.40.149:3000/api';
 }
