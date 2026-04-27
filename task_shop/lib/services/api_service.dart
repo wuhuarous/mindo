@@ -43,6 +43,15 @@ class ApiService {
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> put(String path, Map<String, dynamic> body) async {
+    final res = await http.put(
+      Uri.parse('${AppConstants.baseUrl}$path'),
+      headers: _headers(),
+      body: jsonEncode(body),
+    );
+    return jsonDecode(res.body) as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
     final res = await http.post(
       Uri.parse('${AppConstants.baseUrl}$path'),

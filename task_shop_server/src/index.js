@@ -5,6 +5,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
 import cosRoutes from './routes/cos.js';
 import taskRoutes from './routes/tasks.js';
+import userRoutes from './routes/user.js';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/upload', cosRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/user', userRoutes);
 
 app.use(errorHandler);
 

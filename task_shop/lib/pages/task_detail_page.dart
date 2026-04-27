@@ -44,6 +44,15 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     }
   }
 
+  IconData _typeIcon() {
+    switch (widget.task.type) {
+      case 'text': return Icons.text_fields_rounded;
+      case 'image': return Icons.image_rounded;
+      case 'video': return Icons.videocam_rounded;
+      default: return Icons.task_alt_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasCompletion = _detail != null &&
@@ -51,6 +60,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         (_detail!['completions'] as List).isNotEmpty;
     final completion =
         hasCompletion ? (_detail!['completions'] as List).first as Map<String, dynamic> : null;
+    final completionUser = completion?['user'] as Map<String, dynamic>?;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -69,8 +79,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: AppColors.card,
-                      borderRadius:
-                          BorderRadius.circular(AppTokens.radiusXL),
+                      borderRadius: BorderRadius.circular(AppTokens.radiusXL),
                       boxShadow: [
                         AppTokens.shadowMD,
                         BoxShadow(
@@ -95,15 +104,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                                 borderRadius:
                                     BorderRadius.circular(AppTokens.radiusSM),
                               ),
-                              child: Icon(
-                                widget.task.type == 'text'
-                                    ? Icons.text_fields_rounded
-                                    : widget.task.type == 'image'
-                                        ? Icons.image_rounded
-                                        : Icons.videocam_rounded,
-                                color: _typeColor(),
-                                size: 24,
-                              ),
+                              child: Icon(_typeIcon(), color: _typeColor(), size: 24),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -135,50 +136,11 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             ),
                           ],
                         ),
-                        // 文案内容
-                        if (widget.task.type == 'text' &&
-                            widget.task.contentUrl != null &&
+                        // 任务内容 — 按类型显示
+                        if (widget.task.contentUrl != null &&
                             widget.task.contentUrl!.isNotEmpty) ...[
                           const SizedBox(height: 16),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: AppColors.muted,
-                              borderRadius:
-                                  BorderRadius.circular(AppTokens.radiusSM),
-                            ),
-                            child: Text(widget.task.contentUrl!,
-                                style: GoogleFonts.nunito(
-                                    fontSize: 14,
-                                    color: AppColors.foreground,
-                                    height: 1.6)),
-                          ),
-                        ],
-                        // 图片内容
-                        if (widget.task.type == 'image' &&
-                            widget.task.contentUrl != null) ...[
-                          const SizedBox(height: 16),
-                          ClipRRect(
-                            borderRadius:
-                                BorderRadius.circular(AppTokens.radiusMD),
-                            child: Image.network(
-                              widget.task.contentUrl!,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, e, s) => Container(
-                                height: 180,
-                                decoration: BoxDecoration(
-                                  color: AppColors.muted,
-                                  borderRadius: BorderRadius.circular(
-                                      AppTokens.radiusMD),
-                                ),
-                                child: const Center(
-                                    child: Icon(Icons.broken_image_rounded,
-                                        color: AppColors.mutedForeground)),
-                              ),
-                            ),
-                          ),
+                          _buildTaskContent(widget.task.type, widget.task.contentUrl!),
                         ],
                         const SizedBox(height: 14),
                         Row(
@@ -219,8 +181,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: AppColors.card,
-                        borderRadius:
-                            BorderRadius.circular(AppTokens.radiusXL),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusXL),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.statusCompleted.withValues(alpha: 0.15),
@@ -233,35 +194,40 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             offset: const Offset(-1, -1),
                           ),
                         ],
-                        border: Border.all(color: AppColors.statusCompleted.withValues(alpha: 0.3)),
+                        border: Border.all(
+                            color: AppColors.statusCompleted.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              const AvatarDisplay(avatarIndex: 0, size: 32),
+                              AvatarDisplay(
+                                avatarIndex: completionUser?['avatarIndex'] as int? ?? 0,
+                                size: 32,
+                              ),
                               const SizedBox(width: 10),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '领取人',
+                                    completionUser?['nickname'] as String? ??
+                                        '用户 ${(completionUser?['phone'] as String? ?? '***').substring(0, 3)}****',
                                     style: GoogleFonts.nunito(
-                                        fontSize: 12,
-                                        color: AppColors.mutedForeground),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.foreground),
                                   ),
                                   Text('已完成',
                                       style: GoogleFonts.nunito(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 11,
                                           color: AppColors.statusCompleted)),
                                 ],
                               ),
                               const Spacer(),
                               if (completion['submittedAt'] != null)
                                 Text(
-                                  '${DateTime.parse(completion['submittedAt'] as String).month}/${DateTime.parse(completion['submittedAt'] as String).day} ${DateTime.parse(completion['submittedAt'] as String).hour}:${DateTime.parse(completion['submittedAt'] as String).minute.toString().padLeft(2, '0')}',
+                                  _formatTime(completion['submittedAt'] as String),
                                   style: GoogleFonts.nunito(
                                       fontSize: 11,
                                       color: AppColors.mutedForeground),
@@ -269,8 +235,9 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildContentDisplay(
-                              completion['contentUrl'] as String? ?? ''),
+                          _buildCompletionContent(
+                            completion['contentUrl'] as String? ?? '',
+                          ),
                         ],
                       ),
                     ),
@@ -280,8 +247,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: AppColors.card,
-                        borderRadius:
-                            BorderRadius.circular(AppTokens.radiusXL),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusXL),
                         border: Border.all(
                             color: AppColors.border.withValues(alpha: 0.5)),
                       ),
@@ -302,8 +268,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: AppColors.card,
-                        borderRadius:
-                            BorderRadius.circular(AppTokens.radiusXL),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusXL),
                         border: Border.all(
                             color: AppColors.border.withValues(alpha: 0.5)),
                       ),
@@ -324,8 +289,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: AppColors.card,
-                        borderRadius:
-                            BorderRadius.circular(AppTokens.radiusXL),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusXL),
                         border: Border.all(
                             color: AppColors.border.withValues(alpha: 0.5)),
                       ),
@@ -347,37 +311,69 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 
-  Color _statusColor() {
-    switch (widget.task.status) {
-      case 'pending': return AppColors.statusPending;
-      case 'doing': return AppColors.statusDoing;
-      case 'completed': return AppColors.statusCompleted;
-      case 'expired': return AppColors.statusExpired;
-      default: return AppColors.mutedForeground;
+  Widget _buildTaskContent(String type, String content) {
+    switch (type) {
+      case 'image':
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(AppTokens.radiusMD),
+          child: Image.network(
+            content,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, e, s) => Container(
+              height: 180,
+              decoration: BoxDecoration(
+                color: AppColors.muted,
+                borderRadius: BorderRadius.circular(AppTokens.radiusMD),
+              ),
+              child: const Center(
+                child: Icon(Icons.broken_image_rounded, color: AppColors.mutedForeground),
+              ),
+            ),
+          ),
+        );
+      case 'video':
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.videoTask.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.videocam_rounded, color: AppColors.videoTask, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(content,
+                    style: GoogleFonts.nunito(
+                        fontSize: 13, color: AppColors.videoTask, height: 1.5)),
+              ),
+            ],
+          ),
+        );
+      default:
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.muted,
+            borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+          ),
+          child: Text(content,
+              style: GoogleFonts.nunito(
+                  fontSize: 14, color: AppColors.foreground, height: 1.6)),
+        );
     }
   }
 
-  Color _statusBgColor() {
-    switch (widget.task.status) {
-      case 'pending': return AppColors.statusPending.withValues(alpha: 0.1);
-      case 'doing': return AppColors.statusDoing.withValues(alpha: 0.1);
-      case 'completed': return AppColors.statusCompleted.withValues(alpha: 0.1);
-      case 'expired': return AppColors.statusExpired.withValues(alpha: 0.1);
-      default: return AppColors.muted.withValues(alpha: 0.1);
+  Widget _buildCompletionContent(String contentUrl) {
+    if (contentUrl.isEmpty) {
+      return Text('无内容',
+          style: GoogleFonts.nunito(color: AppColors.mutedForeground));
     }
-  }
 
-  bool _isImageUrl(String url) {
-    if (url.isEmpty) return false;
-    return url.startsWith('http') &&
-        (url.contains('.jpg') || url.contains('.jpeg') ||
-            url.contains('.png') || url.contains('.gif') ||
-            url.contains('.webp') || url.contains('.bmp') ||
-            url.contains('cos.ap-guangzhou.myqcloud.com'));
-  }
-
-  Widget _buildContentDisplay(String contentUrl) {
-    if (_isImageUrl(contentUrl)) {
+    if (_isMediaUrl(contentUrl)) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(AppTokens.radiusSM),
         child: Image.network(
@@ -410,5 +406,46 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           style: GoogleFonts.nunito(
               fontSize: 14, color: AppColors.foreground, height: 1.6)),
     );
+  }
+
+  bool _isMediaUrl(String url) {
+    if (url.isEmpty) return false;
+    if (!url.startsWith('http')) return false;
+    final lower = url.toLowerCase();
+    return lower.contains('.jpg') ||
+        lower.contains('.jpeg') ||
+        lower.contains('.png') ||
+        lower.contains('.gif') ||
+        lower.contains('.webp') ||
+        lower.contains('.bmp') ||
+        lower.contains('.svg') ||
+        lower.contains('myqcloud.com') ||
+        lower.contains('cos.') ||
+        lower.contains('image');
+  }
+
+  String _formatTime(String iso) {
+    final dt = DateTime.parse(iso);
+    return '${dt.month}/${dt.day} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  Color _statusColor() {
+    switch (widget.task.status) {
+      case 'pending': return AppColors.statusPending;
+      case 'doing': return AppColors.statusDoing;
+      case 'completed': return AppColors.statusCompleted;
+      case 'expired': return AppColors.statusExpired;
+      default: return AppColors.mutedForeground;
+    }
+  }
+
+  Color _statusBgColor() {
+    switch (widget.task.status) {
+      case 'pending': return AppColors.statusPending.withValues(alpha: 0.1);
+      case 'doing': return AppColors.statusDoing.withValues(alpha: 0.1);
+      case 'completed': return AppColors.statusCompleted.withValues(alpha: 0.1);
+      case 'expired': return AppColors.statusExpired.withValues(alpha: 0.1);
+      default: return AppColors.muted.withValues(alpha: 0.1);
+    }
   }
 }

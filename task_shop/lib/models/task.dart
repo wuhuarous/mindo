@@ -1,3 +1,5 @@
+import 'user.dart';
+
 class Task {
   final String id;
   final String type;
@@ -9,6 +11,8 @@ class Task {
   final String? claimerId;
   final DateTime? deadline;
   final DateTime createdAt;
+  final User? publisher;
+  final User? claimer;
 
   const Task({
     required this.id,
@@ -21,6 +25,8 @@ class Task {
     this.claimerId,
     this.deadline,
     required this.createdAt,
+    this.publisher,
+    this.claimer,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -35,6 +41,12 @@ class Task {
       claimerId: json['claimerId'] as String?,
       deadline: json['deadline'] != null ? DateTime.parse(json['deadline'] as String) : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      publisher: json['publisher'] != null
+          ? User.fromJson(json['publisher'] as Map<String, dynamic>)
+          : null,
+      claimer: json['claimer'] != null
+          ? User.fromJson(json['claimer'] as Map<String, dynamic>)
+          : null,
     );
   }
 

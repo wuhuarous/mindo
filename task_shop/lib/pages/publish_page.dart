@@ -86,344 +86,396 @@ class _PublishPageState extends State<PublishPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('发布任务')),
+      appBar: AppBar(
+        title: Text('发布差事', style: GoogleFonts.fredoka(fontWeight: FontWeight.w600)),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 类型选择
-            Text('任务类型', style: _labelStyle()),
+            // 类型选择 — 大卡片式
+            _buildSectionLabel('选择差事类型', Icons.category_rounded),
             const SizedBox(height: 10),
             Row(
               children: [
-                _TypeOption(
+                _buildTypeCard(
                   icon: Icons.text_fields_rounded,
                   label: '文案',
-                  selected: _type == 'text',
+                  desc: '写段文字',
                   color: AppColors.textTask,
+                  selected: _type == 'text',
                   onTap: () => setState(() => _type = 'text'),
                 ),
-                const SizedBox(width: 10),
-                _TypeOption(
+                const SizedBox(width: 12),
+                _buildTypeCard(
                   icon: Icons.image_rounded,
                   label: '图片',
-                  selected: _type == 'image',
+                  desc: '拍张照片',
                   color: AppColors.imageTask,
+                  selected: _type == 'image',
                   onTap: () => setState(() => _type = 'image'),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+
+            const SizedBox(height: 24),
 
             // 标题
-            Text('任务标题', style: _labelStyle()),
-            const SizedBox(height: 8),
-            _ClayInput(
-              controller: _titleController,
-              hint: _type == 'text' ? '比如：写一句励志语录' : '比如：猜猜这张图片是哪里的',
-              maxLength: 50,
-            ),
-            const SizedBox(height: 20),
+            _buildSectionLabel('差事标题', Icons.edit_note_rounded),
+            const SizedBox(height: 10),
+            _buildTitleInput(),
+
+            const SizedBox(height: 24),
 
             // 内容区
-            if (_type == 'text') ...[
-              Text('文案内容', style: _labelStyle()),
-              const SizedBox(height: 8),
-              _ClayInput(
-                controller: _textController,
-                hint: '输入任务要求的文案内容...',
-                maxLines: 5,
-                maxLength: 200,
-              ),
-            ],
+            _buildSectionLabel(
+              _type == 'text' ? '文案内容' : '上传图片',
+              _type == 'text' ? Icons.article_rounded : Icons.add_photo_alternate_rounded,
+            ),
+            const SizedBox(height: 10),
+            if (_type == 'text') _buildTextContentInput(),
+            if (_type == 'image') _buildImagePicker(),
 
-            if (_type == 'image') ...[
-              Text('上传图片', style: _labelStyle()),
-              const SizedBox(height: 8),
-              if (_selectedImages.isEmpty)
-                GestureDetector(
-                  onTap: _pickImages,
-                  child: Container(
-                    width: double.infinity,
-                    height: 160,
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(AppTokens.radiusMD),
-                      border: Border.all(
-                          color: AppColors.border, style: BorderStyle.solid),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.clayShadowDark.withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: AppColors.imageTask.withValues(alpha: 0.1),
-                            borderRadius:
-                                BorderRadius.circular(AppTokens.radiusSM),
-                          ),
-                          child: const Icon(Icons.add_photo_alternate_rounded,
-                              color: AppColors.imageTask, size: 28),
-                        ),
-                        const SizedBox(height: 12),
-                        Text('点击选择图片',
-                            style: GoogleFonts.nunito(
-                                color: AppColors.mutedForeground,
-                                fontWeight: FontWeight.w500)),
-                        const SizedBox(height: 4),
-                        Text('最多 9 张',
-                            style: GoogleFonts.nunito(
-                                color: AppColors.border, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                Column(
-                  children: [
-                    ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(AppTokens.radiusMD),
-                      child: Image.file(
-                        _selectedImages.first,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: _pickImages,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.card,
-                              borderRadius:
-                                  BorderRadius.circular(AppTokens.radiusSM),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Text('重新选择',
-                                style: GoogleFonts.nunito(
-                                    fontSize: 12,
-                                    color: AppColors.mutedForeground)),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () => _removeImage(0),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.destructive.withValues(alpha: 0.1),
-                              borderRadius:
-                                  BorderRadius.circular(AppTokens.radiusSM),
-                            ),
-                            child: Text('删除',
-                                style: GoogleFonts.nunito(
-                                    fontSize: 12,
-                                    color: AppColors.destructive)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (_selectedImages.length > 1) ...[
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 70,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _selectedImages.length,
-                          itemBuilder: (_, i) => Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(AppTokens.radiusSM),
-                              child: Image.file(_selectedImages[i],
-                                  width: 70, height: 70, fit: BoxFit.cover),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-            ],
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // 奖励
-            Text('奖励币数', style: _labelStyle()),
-            const SizedBox(height: 8),
-            _ClayInput(
-              controller: _rewardController,
-              hint: '设置完成任务的奖励（1-10 币）',
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 32),
+            _buildSectionLabel('奖励设置', Icons.monetization_on_rounded),
+            const SizedBox(height: 10),
+            _buildRewardInput(),
+
+            const SizedBox(height: 36),
 
             // 发布按钮
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppTokens.radiusLG),
-                  boxShadow:
-                      _publishing ? null : const [AppTokens.shadowMD],
-                ),
-                child: ElevatedButton(
-                  onPressed: _publishing ? null : _publish,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppTokens.radiusLG)),
-                  ),
-                  child: _publishing
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : Text('发布任务',
-                          style: GoogleFonts.nunito(
-                              fontSize: 16, fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ),
+            _buildPublishButton(),
           ],
         ),
       ),
     );
   }
 
-  TextStyle _labelStyle() => GoogleFonts.nunito(
-      fontWeight: FontWeight.w600,
-      fontSize: 14,
-      color: AppColors.foreground);
-}
+  Widget _buildSectionLabel(String text, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: AppColors.primary),
+        ),
+        const SizedBox(width: 8),
+        Text(text,
+            style: GoogleFonts.nunito(
+                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.foreground)),
+      ],
+    );
+  }
 
-class _TypeOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _TypeOption({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTypeCard({
+    required IconData icon,
+    required String label,
+    required String desc,
+    required Color color,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
           duration: AppTokens.durationNormal,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
           decoration: BoxDecoration(
-            color: selected ? color.withValues(alpha: 0.1) : AppColors.card,
-            borderRadius: BorderRadius.circular(AppTokens.radiusMD),
+            color: selected ? color.withValues(alpha: 0.08) : AppColors.card,
+            borderRadius: BorderRadius.circular(AppTokens.radiusXL),
             border: Border.all(
-              color: selected ? color : AppColors.border,
+              color: selected ? color : AppColors.border.withValues(alpha: 0.4),
               width: selected ? 2 : 1,
             ),
             boxShadow: selected
                 ? [
-                    BoxShadow(
-                        color: color.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
+                    BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 16, offset: const Offset(0, 8)),
+                    BoxShadow(color: Colors.white.withValues(alpha: 0.8), blurRadius: 2, offset: const Offset(-1, -1)),
                   ]
                 : [
-                    BoxShadow(
-                        color: AppColors.clayShadowDark.withValues(alpha: 0.04),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3))
+                    BoxShadow(color: AppColors.clayShadowDark.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 4)),
+                    BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 1, offset: const Offset(-1, -1)),
                   ],
           ),
           child: Column(
             children: [
-              Icon(icon,
-                  size: 24,
-                  color: selected ? color : AppColors.mutedForeground),
-              const SizedBox(height: 6),
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: selected ? color.withValues(alpha: 0.15) : AppColors.muted,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusMD),
+                ),
+                child: Icon(icon, size: 28, color: selected ? color : AppColors.mutedForeground),
+              ),
+              const SizedBox(height: 12),
               Text(label,
                   style: GoogleFonts.nunito(
-                      fontWeight: FontWeight.w600,
-                      color: selected ? color : AppColors.mutedForeground)),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? color : AppColors.foreground)),
+              const SizedBox(height: 4),
+              Text(desc,
+                  style: GoogleFonts.nunito(
+                      fontSize: 11, color: AppColors.mutedForeground)),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-class _ClayInput extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-  final int? maxLines;
-  final int? maxLength;
-  final TextInputType? keyboardType;
-
-  const _ClayInput({
-    required this.controller,
-    required this.hint,
-    this.maxLines,
-    this.maxLength,
-    this.keyboardType,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTitleInput() {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppTokens.radiusMD),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.clayShadowDark.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
+          BoxShadow(color: AppColors.clayShadowDark.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 1, offset: const Offset(-1, -1)),
         ],
-        border:
-            Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
       ),
       child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines ?? 1,
-        maxLength: maxLength,
-        style: GoogleFonts.nunito(
-            fontSize: 15, color: AppColors.foreground),
+        controller: _titleController,
+        maxLength: 50,
+        style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.foreground),
         decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.nunito(
-              color: AppColors.mutedForeground.withValues(alpha: 0.5)),
+          hintText: _type == 'text' ? '比如：写一句励志语录' : '比如：拍一张日落的照片',
+          hintStyle: GoogleFonts.nunito(color: AppColors.mutedForeground.withValues(alpha: 0.45), fontSize: 14),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 14),
-          counterStyle: GoogleFonts.nunito(
-              color: AppColors.mutedForeground, fontSize: 11),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          counterStyle: GoogleFonts.nunito(color: AppColors.mutedForeground, fontSize: 11),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextContentInput() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppTokens.radiusMD),
+        boxShadow: [
+          BoxShadow(color: AppColors.clayShadowDark.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 1, offset: const Offset(-1, -1)),
+        ],
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+      ),
+      child: TextField(
+        controller: _textController,
+        maxLines: 5,
+        maxLength: 200,
+        style: GoogleFonts.nunito(fontSize: 14, color: AppColors.foreground, height: 1.6),
+        decoration: InputDecoration(
+          hintText: '输入任务要求的文案内容...',
+          hintStyle: GoogleFonts.nunito(color: AppColors.mutedForeground.withValues(alpha: 0.45), fontSize: 14),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(18),
+          counterStyle: GoogleFonts.nunito(color: AppColors.mutedForeground, fontSize: 11),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    if (_selectedImages.isEmpty) {
+      return GestureDetector(
+        onTap: _pickImages,
+        child: Container(
+          width: double.infinity,
+          height: 180,
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(AppTokens.radiusXL),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.5), style: BorderStyle.solid),
+            boxShadow: [
+              BoxShadow(color: AppColors.clayShadowDark.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 4)),
+              BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 1, offset: const Offset(-1, -1)),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.imageTask.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusMD),
+                ),
+                child: const Icon(Icons.add_photo_alternate_rounded, color: AppColors.imageTask, size: 30),
+              ),
+              const SizedBox(height: 14),
+              Text('点击选择图片',
+                  style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.foreground)),
+              const SizedBox(height: 4),
+              Text('支持 JPG、PNG 格式',
+                  style: GoogleFonts.nunito(fontSize: 12, color: AppColors.mutedForeground)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppTokens.radiusXL),
+          child: Stack(
+            children: [
+              Image.file(
+                _selectedImages.first,
+                width: double.infinity,
+                height: 220,
+                fit: BoxFit.cover,
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: GestureDetector(
+                  onTap: () => _removeImage(0),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.destructive,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            _buildChipButton('换一张', Icons.swap_horiz_rounded, _pickImages),
+            const Spacer(),
+            Text('${_selectedImages.length} 张已选',
+                style: GoogleFonts.nunito(fontSize: 12, color: AppColors.mutedForeground)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChipButton(String label, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(color: AppColors.clayShadowDark.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: AppColors.mutedForeground),
+            const SizedBox(width: 6),
+            Text(label, style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.mutedForeground)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRewardInput() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppTokens.radiusMD),
+        boxShadow: [
+          BoxShadow(color: AppColors.clayShadowDark.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 1, offset: const Offset(-1, -1)),
+        ],
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.monetization_on_rounded, color: AppColors.primary, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: _rewardController,
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.nunito(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.foreground),
+              decoration: InputDecoration(
+                hintText: '1-10 币',
+                hintStyle: GoogleFonts.nunito(color: AppColors.mutedForeground.withValues(alpha: 0.45), fontSize: 14),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          Text('币', style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublishButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppTokens.radiusXL),
+        gradient: _publishing
+            ? null
+            : const LinearGradient(
+                colors: [Color(0xFFF97316), Color(0xFFEA580C)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: _publishing ? AppColors.border : null,
+        boxShadow: _publishing
+            ? null
+            : [
+                BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _publishing ? null : _publish,
+          borderRadius: BorderRadius.circular(AppTokens.radiusXL),
+          child: Center(
+            child: _publishing
+                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 22),
+                      const SizedBox(width: 10),
+                      Text('发布差事',
+                          style: GoogleFonts.nunito(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white)),
+                    ],
+                  ),
+          ),
         ),
       ),
     );

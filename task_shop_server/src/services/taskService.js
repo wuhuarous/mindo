@@ -29,7 +29,7 @@ export async function publishTask(userId, { type, title, contentUrl, rewardCoins
 export async function drawTask(userId) {
   const [task] = await prisma.$transaction(async (tx) => {
     const found = await tx.task.findFirst({
-      where: { status: 'pending', rejected: false },
+      where: { status: 'pending', rejected: false, publisherId: { not: userId } },
       orderBy: { createdAt: 'asc' },
     });
     if (!found) return [null];
@@ -82,6 +82,8 @@ export async function submitTask(userId, { taskId, contentUrl }) {
   return completion;
 }
 
+const userSelect = { id: true, phone: true, nickname: true, avatarIndex: true };
+
 export async function getMyTasks(userId, role) {
   const where = role === 'publisher'
     ? { publisherId: userId }
@@ -91,8 +93,8 @@ export async function getMyTasks(userId, role) {
     where,
     orderBy: { createdAt: 'desc' },
     include: {
-      publisher: { select: { id: true, phone: true } },
-      claimer: { select: { id: true, phone: true } },
+      publisher: { select: userSelect },
+      claimer: { select: userSelect },
     },
   });
 }
@@ -101,11 +103,14 @@ export async function getTaskDetail(taskId, userId) {
   const task = await prisma.task.findUnique({
     where: { id: taskId },
     include: {
-      publisher: { select: { id: true, phone: true } },
-      claimer: { select: { id: true, phone: true } },
+      publisher: { select: userSelect },
+      claimer: { select: userSelect },
       completions: {
         orderBy: { submittedAt: 'desc' },
         take: 1,
+        include: {
+          user: { select: userSelect },
+        },
       },
     },
   });

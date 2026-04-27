@@ -40,7 +40,7 @@ export async function loginWithCode(phone, code) {
       user = await prisma.user.create({ data: { phone, coins: 20 } });
     }
     const token = jwt.sign({ userId: user.id }, config.jwtSecret, { expiresIn: '7d' });
-    return { token, user: { id: user.id, phone: user.phone, coins: user.coins } };
+    return { token, user: { id: user.id, phone: user.phone, nickname: user.nickname, avatarIndex: user.avatarIndex, coins: user.coins } };
   }
 
   const record = await prisma.verificationCode.findFirst({
@@ -69,6 +69,6 @@ export async function loginWithCode(phone, code) {
 
   return {
     token,
-    user: { id: user.id, phone: user.phone, coins: user.coins },
+    user: { id: user.id, phone: user.phone, nickname: user.nickname, avatarIndex: user.avatarIndex, coins: user.coins },
   };
 }

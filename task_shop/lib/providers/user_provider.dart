@@ -32,9 +32,22 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateProfile({String? nickname, int? avatarIndex}) async {
+    final body = <String, dynamic>{};
+    if (nickname != null) body['nickname'] = nickname;
+    if (avatarIndex != null) body['avatarIndex'] = avatarIndex;
+    if (body.isEmpty) return;
+
+    final res = await ApiService().put('/user/profile', body);
+    if (res['success'] == true) {
+      _user = User.fromJson(res['data'] as Map<String, dynamic>);
+      notifyListeners();
+    }
+  }
+
   void updateCoins(int newCoins) {
     if (_user == null) return;
-    _user = User(id: _user!.id, phone: _user!.phone, coins: newCoins);
+    _user = User(id: _user!.id, phone: _user!.phone, nickname: _user!.nickname, avatarIndex: _user!.avatarIndex, coins: newCoins);
     notifyListeners();
   }
 

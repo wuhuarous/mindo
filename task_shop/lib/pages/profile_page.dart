@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/user_provider.dart';
 import '../widgets/coin_display.dart';
 import '../widgets/avatar_picker.dart';
@@ -16,32 +15,57 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  int _avatarIndex = 0;
   bool _showPicker = false;
+  bool _editingNickname = false;
+  late TextEditingController _nicknameController;
 
   @override
   void initState() {
     super.initState();
-    _loadAvatar();
+    _nicknameController = TextEditingController();
   }
 
-  Future<void> _loadAvatar() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() => _avatarIndex = prefs.getInt('avatar') ?? 0);
+  @override
+  void dispose() {
+    _nicknameController.dispose();
+    super.dispose();
   }
 
-  Future<void> _saveAvatar(int i) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('avatar', i);
-    setState(() {
-      _avatarIndex = i;
-      _showPicker = false;
-    });
+  Future<void> _saveAvatar(int index) async {
+    setState(() => _showPicker = false);
+    try {
+      await context.read<UserProvider>().updateProfile(avatarIndex: index);
+    } on Exception {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('头像保存失败')));
+      }
+    }
+  }
+
+  void _startEditNickname(String? current) {
+    _nicknameController.text = current ?? '';
+    setState(() => _editingNickname = true);
+  }
+
+  Future<void> _saveNickname() async {
+    final name = _nicknameController.text.trim();
+    setState(() => _editingNickname = false);
+    if (name.isEmpty) return;
+    try {
+      await context.read<UserProvider>().updateProfile(nickname: name);
+    } on Exception {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('昵称保存失败')));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().user;
+    final displayName = user?.displayName ?? '用户';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -62,8 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   offset: const Offset(-1, -1),
                 ),
               ],
-              border: Border.all(
-                  color: AppColors.border.withValues(alpha: 0.5)),
+              border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
             ),
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -73,7 +96,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Stack(
                     children: [
                       AvatarDisplay(
-                          avatarIndex: _avatarIndex, size: 72),
+                        avatarIndex: user?.avatarIndex ?? 0,
+                        size: 72,
+                      ),
                       Positioned(
                         right: 0,
                         bottom: 0,
@@ -92,14 +117,84 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  '用户 ${user?.phone.substring(0, 3) ?? ''}****${user?.phone.substring(7) ?? ''}',
-                  style: GoogleFonts.fredoka(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.foreground),
-                ),
+                const SizedBox(height: 14),
+
+                // 昵称 — 可编辑
+                if (_editingNickname) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 160,
+                        child: TextField(
+                          controller: _nicknameController,
+                          autofocus: true,
+                          maxLength: 20,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.nunito(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.foreground),
+                          decoration: InputDecoration(
+                            hintText: '输入昵称',
+                            hintStyle: GoogleFonts.nunito(
+                                color: AppColors.mutedForeground.withValues(alpha: 0.5),
+                                fontSize: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                              borderSide: const BorderSide(color: AppColors.primary),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                            ),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            counterText: '',
+                            isDense: true,
+                          ),
+                          onSubmitted: (_) => _saveNickname(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _saveNickname,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  GestureDetector(
+                    onTap: () => _startEditNickname(user?.nickname),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            displayName,
+                            style: GoogleFonts.nunito(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.foreground),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.edit_rounded,
+                            size: 16, color: AppColors.mutedForeground),
+                      ],
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 8),
                 CoinDisplay(coins: user?.coins ?? 0),
               ],
@@ -121,11 +216,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   Text('选择头像',
                       style: GoogleFonts.nunito(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.foreground)),
+                          fontWeight: FontWeight.w600, color: AppColors.foreground)),
                   const SizedBox(height: 12),
                   AvatarPicker(
-                    selectedIndex: _avatarIndex,
+                    selectedIndex: user?.avatarIndex ?? 0,
                     onSelected: _saveAvatar,
                   ),
                 ],
@@ -221,8 +315,7 @@ class _MenuItem extends StatelessWidget {
         ),
         title: Text(title,
             style: GoogleFonts.nunito(
-                fontWeight: FontWeight.w600,
-                color: AppColors.foreground)),
+                fontWeight: FontWeight.w600, color: AppColors.foreground)),
         subtitle: Text(subtitle,
             style: GoogleFonts.nunito(
                 fontSize: 12, color: AppColors.mutedForeground)),

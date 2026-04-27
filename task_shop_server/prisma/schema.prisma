@@ -8,11 +8,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  phone     String   @unique
-  coins     Int      @default(20)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  phone       String   @unique
+  nickname    String?
+  avatarIndex Int      @default(0)
+  coins       Int      @default(20)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   publishedTasks Task[]       @relation("Publisher")
   claimedTasks   Task[]       @relation("Claimer")
